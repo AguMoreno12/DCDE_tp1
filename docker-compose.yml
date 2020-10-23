@@ -1,34 +1,44 @@
 version: '3'
 services:
   basedatos:
-    image: "mysql:8"
+    image: "mysql:5.7"
     ports:
       - "3306:3306"
     environment: 
       - MYSQL_ROOT_PASSWORD=admin
     networks:
       - red
+  linux:
+    build: 
+      context: ./BASH
+    depends_on:
+      - basedatos
+    networks:
+      - red
+    volumes: 
+      - ./BASH:/usr/src/myapp
+    command: ./comando2.bash
   etlpy:
     build: 
       context: ./SCRIPTS
     depends_on:
-      - basedatos
+      - linux
     volumes: 
       - ./SCRIPTS:/usr/src/myapp
     networks:
       - red
-    command: ./comando2.bash && python3 -u scriptpy.py
+    command: python3 -u scriptpy.py
   business:
     build: 
       context: ./SCRIPTS
     volumes: 
-    - ./SCRIPTS:/usr/src/myapp
+      - ./SCRIPTS:/usr/src/myapp
     depends_on:
-    - etlpy
+      - etlpy
     networks:
       - red
     command: python3 -u scriptpy2.py
     
 networks:
   red:
-    driver: bridge  
+    driver: overlay  
